@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% block title %}Избранные авторы{% endblock %}
+{% block content %}
+  <div class="container py-5"> 
+    <h1>Избранные авторы</h1>
+    {% include 'posts/includes/switcher.html' %}
+    {% for post in page_obj %}
+      <article>
+        <ul>
+          <li>
+            Автор: {{ post.author.get_full_name }}
+          </li>
+          <li>
+            Дата публикации: {{ post.pub_date|date:"d E Y" }}
+          </li>
+          {% thumbnail post.image "960x339" upscale=True as im %}
+            <img class="" src="{{ im.url }}">
+          {% endthumbnail %}
+          <p>{{ post.text }}</p>
+          <a href="{% url 'posts:post_detail' post.id %}">подробная информация</a>
+          {% if post.group %}
+            <a href="{% url 'posts:group_list' post.group.slug %}">Все сообщения группы<a/>
+          {% endif %}
+        </ul>
+      </article>  
+      {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}  
+    {% include 'posts/includes/paginator.html' %}
+  </div>  
+{% endblock %}

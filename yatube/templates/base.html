@@ -1,0 +1,33 @@
+{% load static %} 
+{% load thumbnail %}
+<!DOCTYPE html> 
+<html lang="ru">
+  <head> 
+    <meta charset="utf-8"> 
+    <!-- Сайт готов работать с мобильными устройствами -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Загружаем фав-иконки -->
+    <link rel="icon" href="{% static 'img/fav/fav.ico' %}" type="image">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/fav/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/fav/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/fav/favicon-16x16.png' %}">
+    <link rel="android-chrome" type="image/png" sizes="192x192" href="{% static 'img/fav/android-chrome-192x192' %}">
+    <link rel="android-chrome" type="image/png" sizes="256x256" href="{% static 'img/fav/android-chrome-256x256' %}">
+    <link rel="mstile" type="image/png" sizes="150x150" href="{% static 'img/fav/mstile-150x150' %}">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <title>{% block title %}Последние обновления на сайте{% endblock %}</title>
+  </head>
+  <body>
+    <header>
+      {% include 'includes/header.html' %}
+    </header>
+    <main>
+      {% block content %}
+        Информация запрошенной страницы
+      {% endblock %} 
+    </main>
+      {% include 'includes/footer.html' %}
+  </body>
+</html>
