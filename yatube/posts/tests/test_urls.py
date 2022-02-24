@@ -47,35 +47,36 @@ class TestUrlResponse(TestCase):
             ),
         )
         for url in urls:
-            with self.subTest():
+            with self.subTest(url=url):
                 self.assertEqual(
                     self.guest_client.get(url).status_code,
                     HTTPStatus.OK,
                 )
 
     def test_unexisting_page(self):
-        """Ответ для несуществующей страницы,
-        Проверка что для ошибки передан правильный шаблон."""
+        """Ответ для несуществующей страницы."""
         users = (
             self.authorized_client,
             self.guest_client,
         )
         for user in users:
-            with self.subTest():
+            with self.subTest(user=user):
                 self.assertEqual(
                     user.get('/unexisting_page/').status_code,
                     HTTPStatus.NOT_FOUND,
                 )
 
     def test_create_post(self):
-        """Create_post доступен авторизованному пользователю
-        прочие пернаправляются на страницу входа."""
+        """Create_post доступен авторизованному пользователю."""
         self.assertEqual(
             self.authorized_client.get(
                 reverse('posts:post_create')
             ).status_code,
             HTTPStatus.OK,
         )
+
+    def test_create_post_redirect(self):
+        """Redirect  для create_post работает правильно."""
         self.assertRedirects(
             self.guest_client.get(
                 reverse('posts:post_create')
@@ -96,8 +97,18 @@ class TestUrlResponse(TestCase):
         )
 
     def test_post_edit(self):
-        """Редактирование доступно автору, остальные
-         перенаправлены на страницу поста."""
+        """Редактирование доступно автору."""
+        response = self.authorized_client.get(
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': TestUrlResponse.post.id}
+            )
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_redirect_anauthorized(self):
+        """Неавторизованным пользователям недоступно редактирование,
+        redirect выполняется правильно."""
         clients = (
             self.guest_client,
             self.not_author,
@@ -110,18 +121,15 @@ class TestUrlResponse(TestCase):
             'posts:post_detail',
             kwargs={'post_id': TestUrlResponse.post.id}
         )
-        response = self.authorized_client.get(edit_page)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
         for client in clients:
-            with self.subTest():
+            with self.subTest(client=client):
                 self.assertRedirects(
                     client.get(edit_page),
                     redirect_page
                 )
 
-    def test_comment(self):
-        """Авторизованный пользователь может комментировать,
-        неавторизованный отправляется на страницу авторизации."""
+    def test_comment_authorized(self):
+        """Авторизованный пользователь может комментировать."""
         post_comment = reverse(
             'posts:add_comment',
             kwargs={'post_id': TestUrlResponse.post.id}
@@ -138,6 +146,14 @@ class TestUrlResponse(TestCase):
         self.assertRedirects(
             response,
             post_detail,
+        )
+
+    def test_comment_anauthorized(self):
+        """Неавторизованному пользователю недоступны комментарии,
+        он перенаправлен на страницу авторизации."""
+        post_comment = reverse(
+            'posts:add_comment',
+            kwargs={'post_id': TestUrlResponse.post.id}
         )
         self.assertRedirects(
             self.guest_client.get(post_comment),

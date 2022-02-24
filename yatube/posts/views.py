@@ -129,8 +129,9 @@ def add_comment(request, post_id) -> HTTPResponse:
 def follow_index(request) -> HTTPResponse:
     template = 'posts/follow.html'
     current_user = request.user
-    followed = current_user.follower.values('author')
-    posts = Post.objects.filter(author__in=followed)
+    posts = Post.objects.filter(
+        author__in=current_user.follower.values('author')
+    )
     context = {
         'page_obj': paginator(request, posts),
     }
@@ -143,9 +144,7 @@ def profile_follow(request, username) -> HTTPResponse:
     if Follow.objects.filter(user=request.user, author=author).exists():
         return redirect('posts:profile', username)
     if request.user != author:
-        following = Follow.objects.create(user=request.user, author=author)
-        Follow.save(following)
-        return redirect('posts:profile', username)
+        Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 

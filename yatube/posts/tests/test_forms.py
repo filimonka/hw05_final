@@ -24,9 +24,23 @@ class PostCreateFormTest(TestCase):
             slug='duremar',
             description='Всё о пиявках.',
         )
+        temp_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='temp_1.gif',
+            content=temp_gif,
+            content_type='image/gif'
+        )
         cls.post = Post.objects.create(
             author=cls.user,
             text='Три корочки хлеба',
+            image=uploaded
         )
 
     @classmethod
@@ -51,7 +65,7 @@ class PostCreateFormTest(TestCase):
             b'\x0A\x00\x3B'
         )
         uploaded = SimpleUploadedFile(
-            name='temp.gif',
+            name='temp_2.gif',
             content=temp_gif,
             content_type='image/gif'
         )
@@ -70,7 +84,7 @@ class PostCreateFormTest(TestCase):
             last_post.author.username: 'Буратино',
             last_post.text: 'Крекс, фекс, пекс',
             last_post.group.id: PostCreateFormTest.group.id,
-            last_post.image: 'posts/temp.gif',
+            last_post.image: 'posts/temp_2.gif',
             Post.objects.count(): posts_count + 1,
         }
         self.assertRedirects(
@@ -83,15 +97,29 @@ class PostCreateFormTest(TestCase):
             )
         )
         for expected, value in context.items():
-            with self.subTest():
+            with self.subTest(value=value):
                 self.assertEqual(expected, value)
 
     def test_post_edited(self):
         """Пост редактируется правильно."""
         posts_count = Post.objects.count()
+        temp_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='temp.gif',
+            content=temp_gif,
+            content_type='image/gif'
+        )
         form_data = {
             'text': 'В стране дураков',
             'group': PostCreateFormTest.group.id,
+            'image': uploaded,
         }
         response = self.authorized_client.post(
             reverse(
@@ -107,6 +135,7 @@ class PostCreateFormTest(TestCase):
             db_post.author.username: 'Буратино',
             db_post.text: 'В стране дураков',
             db_post.group.id: PostCreateFormTest.group.id,
+            db_post.image: 'posts/temp.gif',
         }
         self.assertRedirects(
             response,
@@ -118,7 +147,7 @@ class PostCreateFormTest(TestCase):
             )
         )
         for value, expected in context.items():
-            with self.subTest():
+            with self.subTest(value=value):
                 self.assertEqual(value, expected)
 
     def test_comment_creation(self):
@@ -134,12 +163,13 @@ class PostCreateFormTest(TestCase):
             data=data,
             follow=True
         )
-        comment = response.context['comments']
+        comments = response.context['comments']
+        db_post = Post.objects.get(id=PostCreateFormTest.post.id)
         context = {
-            comment[0].text: 'Пилите, Шура, она золотая!',
-            len(comment): PostCreateFormTest.post.comments.count(),
-            comment[0].author: PostCreateFormTest.user,
+            db_post.comments.last().text: comments[0].text,
+            db_post.comments.count(): len(comments),
+            db_post.comments.last().author: comments[0].author,
         }
         for value, expected in context.items():
-            with self.subTest():
+            with self.subTest(value=value):
                 self.assertEqual(value, expected)

@@ -264,32 +264,43 @@ class PaginatorViewsTest(TestCase):
 
     def test_cache(self):
         """Проверяем, что главная страница кэшируется."""
+        page = (reverse('posts:index'), {'page': 2})
         initial_count = Post.objects.count() - 10
-        response = self.client.get(reverse('posts:index'), {'page': 2})
-        posts_to_show = response.content.decode('utf-8').count('<article>')
+        posts_to_show = self.client.get(*page).content.decode(
+            'utf-8').count('<article>')
         Post.objects.last().delete()
         final_count = Post.objects.count() - 10
-        response_cached = self.client.get(reverse('posts:index'), {'page': 2})
-        posts_shows = response_cached.content.decode(
+        posts_shows = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
+        posts_numbers = {
+            posts_to_show: posts_shows,
+            final_count: initial_count - 1,
+            posts_shows: initial_count,
+        }
+        print(initial_count, final_count, posts_shows, posts_to_show)
+        for value, expected in posts_numbers.items():
+            with self.subTest(value=value):
+                self.assertEqual(value, expected)
+
+    def test_unchached(self):
+        """Проверяем, что после сброса кэша страница работает правильно."""
+        page = (reverse('posts:index'), {'page': 2})
+        initial_count = Post.objects.count() - 10
+        posts_to_show = self.client.get(*page).content.decode(
+            'utf-8').count('<article>')
+        Post.objects.last().delete()
+        final_count = Post.objects.count() - 10
         cache.clear()
-        response_uncached = self.client.get(
-            reverse('posts:index'), {'page': 2}
-        )
-        uncached_posts_count = response_uncached.content.decode(
+        posts_shows = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
-        self.assertEqual(
-            posts_to_show,
-            posts_shows
-        )
-        self.assertNotEqual(
-            initial_count,
-            final_count
-        )
-        self.assertEqual(
-            final_count,
-            uncached_posts_count
-        )
+        posts_numbers = {
+            final_count: initial_count - 1,
+            posts_to_show: initial_count,
+            posts_shows: final_count,
+        }
+        for value, expected in posts_numbers.items():
+            with self.subTest(value=value):
+                self.assertEqual(value, expected)
 
 
 class NewPostCreationCheck(TestCase):
@@ -317,11 +328,11 @@ class NewPostCreationCheck(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(NewPostCreationCheck.user)
         self.user = User.objects.create_user(username='Muzzy')
-        self.Muzzy = Client()
-        self.Muzzy.force_login(self.user)
-        self.FM = User.objects.create_user(username='Достоевский')
-        self.client_FM = Client()
-        self.client_FM.force_login(self.FM)
+        self.muzzy = Client()
+        self.muzzy.force_login(self.user)
+        self.fm = User.objects.create_user(username='Достоевский')
+        self.client_fm = Client()
+        self.client_fm.force_login(self.fm)
         cache.clear()
 
     def test_group_post(self):
@@ -376,32 +387,32 @@ class NewPostCreationCheck(TestCase):
             len(comment): 1,
         }
         for value, expected in context.items():
-            with self.subTest():
+            with self.subTest(value=value):
                 self.assertEqual(value, expected)
 
     def test_authorized_client_can_subscribe(self):
         """Авторизованный пользователь может подписаться на автора
         и отписаться от него."""
-        subscriptions_count = self.FM.follower.count()
-        self.client_FM.get(
+        subscriptions_count = self.fm.follower.count()
+        self.client_fm.get(
             reverse('posts:profile_follow', kwargs={'username': 'Muzzy'})
         )
-        self.assertEqual(self.FM.follower.count(), subscriptions_count + 1)
-        self.client_FM.get(
+        self.assertEqual(self.fm.follower.count(), subscriptions_count + 1)
+        self.client_fm.get(
             reverse('posts:profile_unfollow', kwargs={'username': 'Muzzy'})
         )
-        self.assertEqual(self.FM.follower.count(), subscriptions_count)
+        self.assertEqual(self.fm.follower.count(), subscriptions_count)
 
     def test_new_post_subscribed(self):
         """Новый пост виден подписчику и не виден другому пользователю."""
-        self.Muzzy.get(
+        self.muzzy.get(
             reverse('posts:profile_follow', kwargs={'username': 'Достоевский'})
         )
         new_post = Post.objects.create(
-            author=self.FM,
+            author=self.fm,
             text='Молчать - большой талант.'
         )
-        seen = self.Muzzy.get(reverse('posts:follow_index'))
+        seen = self.muzzy.get(reverse('posts:follow_index'))
         unseen = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertEqual(
             seen.context['page_obj'][0].text,
