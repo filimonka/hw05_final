@@ -40,10 +40,9 @@ def group_posts(request, slug) -> HTTPResponse:
 def profile(request, username) -> HTTPResponse:
     template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
+    is_following = None
     if request.user.is_authenticated:
         is_following = request.user.follower.filter(author=author).exists()
-    else:
-        is_following = None
     posts_count = author.posts.count()
     context = {
         'author': author,

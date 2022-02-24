@@ -265,42 +265,23 @@ class PaginatorViewsTest(TestCase):
     def test_cache(self):
         """Проверяем, что главная страница кэшируется."""
         page = (reverse('posts:index'), {'page': 2})
-        initial_count = Post.objects.count() - 10
         posts_to_show = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
         Post.objects.last().delete()
-        final_count = Post.objects.count() - 10
         posts_shows = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
-        posts_numbers = {
-            posts_to_show: posts_shows,
-            final_count: initial_count - 1,
-            posts_shows: initial_count,
-        }
-        print(initial_count, final_count, posts_shows, posts_to_show)
-        for value, expected in posts_numbers.items():
-            with self.subTest(value=value):
-                self.assertEqual(value, expected)
+        self.assertEqual(posts_shows, posts_to_show)
 
     def test_unchached(self):
         """Проверяем, что после сброса кэша страница работает правильно."""
         page = (reverse('posts:index'), {'page': 2})
-        initial_count = Post.objects.count() - 10
         posts_to_show = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
         Post.objects.last().delete()
-        final_count = Post.objects.count() - 10
         cache.clear()
         posts_shows = self.client.get(*page).content.decode(
             'utf-8').count('<article>')
-        posts_numbers = {
-            final_count: initial_count - 1,
-            posts_to_show: initial_count,
-            posts_shows: final_count,
-        }
-        for value, expected in posts_numbers.items():
-            with self.subTest(value=value):
-                self.assertEqual(value, expected)
+        self.assertEqual(posts_to_show - 1, posts_shows)
 
 
 class NewPostCreationCheck(TestCase):

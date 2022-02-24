@@ -106,8 +106,8 @@ class TestUrlResponse(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_redirect_anauthorized(self):
-        """Неавторизованным пользователям недоступно редактирование,
+    def test_redirect_not_author(self):
+        """Неавтору недоступно редактирование,
         redirect выполняется правильно."""
         clients = (
             self.guest_client,
