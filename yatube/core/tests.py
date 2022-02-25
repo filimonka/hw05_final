@@ -26,3 +26,10 @@ class TestUrlCore(TestCase):
                     user.get('/unexisting_page/').status_code,
                     HTTPStatus.NOT_FOUND,
                 )
+
+    def test_template_unexisting(self):
+        """Для несуществующей страницы использован правильный шаблон."""
+        self.assertTemplateUsed(
+            self.authorized_client.get('/unexisting_page/'),
+            'core/404.html'
+        )

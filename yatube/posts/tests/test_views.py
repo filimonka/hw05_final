@@ -60,7 +60,6 @@ class TestTemplateCorrect(TestCase):
                 'posts:follow_index'
             ):
             'posts/follow.html',
-            '/unexisting_page/': 'core/404.html',
         }
         for url, template in template_urls.items():
             response = self.authorized_client.get(url)
