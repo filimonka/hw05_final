@@ -79,14 +79,6 @@ class PostCreateFormTest(TestCase):
             data=form_data,
             follow=True
         )
-        last_post = Post.objects.first()
-        context = {
-            last_post.author.username: 'Буратино',
-            last_post.text: 'Крекс, фекс, пекс',
-            last_post.group.id: PostCreateFormTest.group.id,
-            last_post.image: 'posts/temp_2.gif',
-            Post.objects.count(): posts_count + 1,
-        }
         self.assertRedirects(
             response,
             reverse(
@@ -96,6 +88,14 @@ class PostCreateFormTest(TestCase):
                 }
             )
         )
+        last_post = Post.objects.first()
+        context = {
+            last_post.author.username: 'Буратино',
+            last_post.text: 'Крекс, фекс, пекс',
+            last_post.group.id: PostCreateFormTest.group.id,
+            last_post.image: 'posts/temp_2.gif',
+            Post.objects.count(): posts_count + 1,
+        }
         for expected, value in context.items():
             with self.subTest(value=value):
                 self.assertEqual(expected, value)

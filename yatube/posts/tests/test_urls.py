@@ -3,7 +3,7 @@ from http import HTTPStatus
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Group, Post, Comment, User
 
 
 class TestUrlResponse(TestCase):
@@ -53,19 +53,6 @@ class TestUrlResponse(TestCase):
                     HTTPStatus.OK,
                 )
 
-    def test_unexisting_page(self):
-        """Ответ для несуществующей страницы."""
-        users = (
-            self.authorized_client,
-            self.guest_client,
-        )
-        for user in users:
-            with self.subTest(user=user):
-                self.assertEqual(
-                    user.get('/unexisting_page/').status_code,
-                    HTTPStatus.NOT_FOUND,
-                )
-
     def test_create_post(self):
         """Create_post доступен авторизованному пользователю."""
         self.assertEqual(
@@ -75,25 +62,14 @@ class TestUrlResponse(TestCase):
             HTTPStatus.OK,
         )
 
-    def test_create_post_redirect(self):
-        """Redirect  для create_post работает правильно."""
+    def test_create_post_redirect_unauthorized(self):
+        """Неавторизованный пользователь при попытке создания поста
+        направлен на страницу авторизации."""
         self.assertRedirects(
             self.guest_client.get(
                 reverse('posts:post_create')
             ),
             '/auth/login/?next=/create/',
-        )
-        self.assertRedirects(
-            self.authorized_client.post(
-                reverse('posts:post_create'),
-                data={
-                    'text': 'Сейчас мы их проверим'
-                }
-            ),
-            reverse(
-                'posts:profile',
-                kwargs={'username': TestUrlResponse.user.username}
-            )
         )
 
     def test_post_edit(self):
@@ -147,8 +123,12 @@ class TestUrlResponse(TestCase):
             response,
             post_detail,
         )
+        self.assertEqual(
+            Comment.objects.last().text,
+            'Несите ваши денежки'
+        )
 
-    def test_comment_anauthorized(self):
+    def test_comment_unauthorized(self):
         """Неавторизованному пользователю недоступны комментарии,
         он перенаправлен на страницу авторизации."""
         post_comment = reverse(

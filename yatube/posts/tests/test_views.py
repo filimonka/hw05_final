@@ -265,11 +265,11 @@ class PaginatorViewsTest(TestCase):
     def test_cache(self):
         """Проверяем, что главная страница кэшируется."""
         page = (reverse('posts:index'), {'page': 2})
-        posts_to_show = self.client.get(*page).content.decode(
-            'utf-8').count('<article>')
+        posts_to_show = self.client.get(
+            *page).content.decode('utf-8').count('<article>')
         Post.objects.last().delete()
-        posts_shows = self.client.get(*page).content.decode(
-            'utf-8').count('<article>')
+        posts_shows = self.client.get(
+            *page).content.decode('utf-8').count('<article>')
         self.assertEqual(posts_shows, posts_to_show)
 
     def test_unchached(self):
