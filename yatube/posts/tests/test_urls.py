@@ -123,10 +123,15 @@ class TestUrlResponse(TestCase):
             response,
             post_detail,
         )
-        self.assertEqual(
-            Comment.objects.last().text,
-            'Несите ваши денежки'
-        )
+        comment = Comment.objects.last()
+        comment_data = {
+            comment.text: 'Несите ваши денежки',
+            comment.post.id: TestUrlResponse.post.id,
+            comment.author: TestUrlResponse.user,
+        }
+        for value, expected in comment_data.items():
+            with self.subTest(value=value):
+                self.assertEqual(value, expected)
 
     def test_comment_unauthorized(self):
         """Неавторизованному пользователю недоступны комментарии,

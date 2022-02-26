@@ -129,7 +129,7 @@ def follow_index(request) -> HTTPResponse:
     template = 'posts/follow.html'
     current_user = request.user
     posts = Post.objects.filter(
-        author__in=current_user.follower.values('author')
+        author__following__user=current_user
     )
     context = {
         'page_obj': paginator(request, posts),
